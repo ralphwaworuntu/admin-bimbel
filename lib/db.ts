@@ -34,7 +34,8 @@ function initTables() {
     `);
 }
 
-// CRUD Operations
+// --- SITE OPERATIONS ---
+
 export function createSite(userId: string, name: string, config: any, templateId?: string) {
     const database = getDb();
     const id = "site-" + Math.random().toString(36).substr(2, 9);
@@ -62,6 +63,17 @@ export function getSitesByUser(userId: string) {
     }));
 }
 
+export function getAllSites() {
+    const database = getDb();
+    const stmt = database.prepare("SELECT * FROM sites ORDER BY created_at DESC");
+    const rows = stmt.all() as any[];
+
+    return rows.map((row) => ({
+        ...row,
+        config: JSON.parse(row.config),
+    }));
+}
+
 export function getSiteById(siteId: string) {
     const database = getDb();
     const stmt = database.prepare("SELECT * FROM sites WHERE id = ?");
@@ -74,7 +86,7 @@ export function getSiteById(siteId: string) {
     };
 }
 
-export function updateSite(siteId: string, updates: { name?: string; config?: any; status?: string }) {
+export function updateSite(siteId: string, updates: { name?: string; config?: any; status?: string; deployment_url?: string }) {
     const database = getDb();
     const fields: string[] = [];
     const values: any[] = [];
@@ -91,6 +103,10 @@ export function updateSite(siteId: string, updates: { name?: string; config?: an
         fields.push("status = ?");
         values.push(updates.status);
     }
+    if (updates.deployment_url) {
+        fields.push("deployment_url = ?");
+        values.push(updates.deployment_url);
+    }
 
     fields.push("updated_at = datetime('now')");
     values.push(siteId);
@@ -103,4 +119,41 @@ export function deleteSite(siteId: string) {
     const database = getDb();
     const stmt = database.prepare("DELETE FROM sites WHERE id = ?");
     return stmt.run(siteId);
+}
+
+// --- USER OPERATIONS ---
+
+export function getAllUsers() {
+    const database = getDb();
+    // Better Auth 'user' table
+    try {
+        const stmt = database.prepare("SELECT id, name, email, role, createdAt, image FROM user ORDER BY createdAt DESC");
+        return stmt.all() as any[];
+    } catch (e) {
+        return []; // Table might not exist yet if no users
+    }
+}
+
+export function updateUserRole(userId: string, role: string) {
+    const database = getDb();
+    const stmt = database.prepare("UPDATE user SET role = ? WHERE id = ?");
+    return stmt.run(role, userId);
+}
+
+export function deleteUser(userId: string) {
+    const database = getDb();
+
+    const deleteUserStmt = database.prepare("DELETE FROM user WHERE id = ?");
+    const deleteSessionStmt = database.prepare("DELETE FROM session WHERE userId = ?");
+    const deleteAccountStmt = database.prepare("DELETE FROM account WHERE userId = ?");
+    const deleteSitesStmt = database.prepare("DELETE FROM sites WHERE user_id = ?");
+
+    const transaction = database.transaction(() => {
+        deleteUserStmt.run(userId);
+        deleteSessionStmt.run(userId);
+        deleteAccountStmt.run(userId);
+        deleteSitesStmt.run(userId);
+    });
+
+    return transaction();
 }
