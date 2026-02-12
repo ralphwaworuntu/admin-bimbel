@@ -84,7 +84,7 @@ export default function BillingPage() {
                                 </div>
                             </div>
                             <div className="md:w-64 space-y-4">
-                                <Link href="/dashboard/settings">
+                                <Link href="/pricing">
                                     <button className="w-full py-4 bg-white text-slate-900 rounded-2xl font-black text-sm shadow-xl hover:bg-primary-brand hover:text-white transition-all">
                                         Upgrade Tier
                                     </button>
