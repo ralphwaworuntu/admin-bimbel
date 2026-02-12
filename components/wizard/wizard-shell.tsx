@@ -12,6 +12,7 @@ import { PropagationPulse } from "./steps/propagation-pulse";
 import { Button } from "@/components/ui/button";
 import { Check, ArrowLeft, ArrowRight, Loader2, Sparkles, Wand2, ShieldCheck, Zap, Moon, Sun } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
@@ -24,6 +25,7 @@ export function WizardShell() {
     const [isSeeding, setIsSeeding] = useState(true);
     const [seedInput, setSeedInput] = useState("");
     const [isProcessingSeed, setIsProcessingSeed] = useState(false);
+    const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
 
     const handleDeploy = () => {
         setIsDeploying(true);
@@ -229,9 +231,31 @@ export function WizardShell() {
                     </Link>
                     <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Workspace</span>
-                        <span className="material-icons text-xs text-slate-300">chevron_right</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest hidden sm:inline">Workspace</span>
+                        <span className="material-icons text-xs text-slate-300 hidden sm:inline">chevron_right</span>
                         <span className="text-xs font-black truncate max-w-[150px]">{config.identity.brandName || "New Project"}</span>
+                    </div>
+
+                    {/* Mobile Tab Toggle */}
+                    <div className="flex lg:hidden bg-slate-100 dark:bg-slate-800 rounded-lg p-1 ml-4 border border-slate-200 dark:border-slate-700">
+                        <button
+                            onClick={() => setActiveTab('editor')}
+                            className={cn(
+                                "px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all",
+                                activeTab === 'editor' ? "bg-white dark:bg-slate-700 text-primary-brand shadow-sm" : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                            )}
+                        >
+                            Editor
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('preview')}
+                            className={cn(
+                                "px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all",
+                                activeTab === 'preview' ? "bg-white dark:bg-slate-700 text-primary-brand shadow-sm" : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                            )}
+                        >
+                            Preview
+                        </button>
                     </div>
                 </div>
 
@@ -269,7 +293,10 @@ export function WizardShell() {
                             animate={{ width: 450, opacity: 1 }}
                             exit={{ width: 0, opacity: 0 }}
                             transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-                            className="w-[450px] flex-shrink-0 border-r border-slate-100 dark:border-slate-800 flex flex-col bg-slate-50/50 dark:bg-slate-900/10 z-10 overflow-hidden"
+                            className={cn(
+                                "w-full lg:w-[450px] flex-shrink-0 border-r border-slate-100 dark:border-slate-800 flex-col bg-slate-50/50 dark:bg-slate-900/10 z-10 overflow-hidden",
+                                activeTab === 'editor' ? 'flex' : 'hidden lg:flex'
+                            )}
                         >
                             <div className="p-8 space-y-6">
                                 <div className="flex items-center justify-between">
@@ -462,7 +489,10 @@ export function WizardShell() {
                     )}
                 </AnimatePresence>
 
-                <main className="flex-1 bg-slate-50 dark:bg-slate-950 p-6 lg:p-10 overflow-hidden flex flex-col relative z-0">
+                <main className={cn(
+                    "flex-1 bg-slate-50 dark:bg-slate-950 p-6 lg:p-10 overflow-hidden flex-col relative z-0",
+                    activeTab === 'preview' ? 'flex' : 'hidden lg:flex'
+                )}>
                     <div className="absolute inset-0 pointer-events-none z-0">
                         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary-brand/5 blur-[100px] rounded-full"></div>
                     </div>
