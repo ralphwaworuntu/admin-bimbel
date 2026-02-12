@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useWizard } from "./wizard-context";
 import { motion } from "framer-motion";
-import { Shield, Palette, Type, MessageSquare, Download, CheckCircle2, AlertCircle, Globe, Target, Zap, BarChart3 } from "lucide-react";
+import { Shield, Palette, Type, MessageSquare, Download, CheckCircle2, AlertCircle, Globe, Target, Zap, BarChart3, FileJson, FileCode } from "lucide-react";
+import { exportSiteConfig } from "@/lib/export-site";
 
 export function SovereignBrandReport() {
     const { config, getContrastScore } = useWizard();
@@ -180,15 +181,27 @@ export function SovereignBrandReport() {
                 </motion.div>
             )}
 
-            <motion.button
+            <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
-                className="w-full py-6 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-900 hover:border-slate-900 dark:hover:text-white dark:hover:border-white transition-all flex items-center justify-center gap-3 group"
+                className="grid grid-cols-1 md:grid-cols-2 gap-4"
             >
-                <Download className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
-                <span className="text-xs font-black uppercase tracking-[0.2em]">Download Full Brand Strategy Report (.PDF)</span>
-            </motion.button>
+                <button
+                    onClick={() => exportSiteConfig(config, { format: 'json' })}
+                    className="py-5 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 text-slate-400 hover:text-primary-brand hover:border-primary-brand dark:hover:text-primary-brand dark:hover:border-primary-brand transition-all flex items-center justify-center gap-3 group"
+                >
+                    <FileJson className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
+                    <span className="text-xs font-black uppercase tracking-[0.2em]">Export Config (.JSON)</span>
+                </button>
+                <button
+                    onClick={() => exportSiteConfig(config, { format: 'html' })}
+                    className="py-5 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 text-slate-400 hover:text-emerald-500 hover:border-emerald-500 dark:hover:text-emerald-500 dark:hover:border-emerald-500 transition-all flex items-center justify-center gap-3 group"
+                >
+                    <FileCode className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
+                    <span className="text-xs font-black uppercase tracking-[0.2em]">Export Site (.HTML)</span>
+                </button>
+            </motion.div>
         </div>
     );
 }

@@ -18,14 +18,17 @@ import {
     Target,
     Maximize2,
     Menu,
-    X
+    X,
+    LogOut
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useLayoutEffect } from "react";
 import { NotificationPanel } from "@/components/notifications-panel";
 import { CommandHUD } from "@/components/dashboard/command-hud";
 import { ProphecyEngine } from "@/components/dashboard/prophecy-engine";
+import { useSession, signOut } from "@/lib/auth-client";
+import { useTranslation } from "@/lib/i18n";
 
 // Shared Transition Orbit for perfect synchronization
 const SPRING_TRANSITION = {
@@ -62,6 +65,16 @@ export default function DashboardLayout({
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [width] = useWindowSize();
     const pathname = usePathname();
+    const router = useRouter();
+    const { data: session, isPending } = useSession();
+    const { locale, setLocale, t } = useTranslation();
+
+    // Auth guard — redirect to login if not authenticated
+    useEffect(() => {
+        if (!isPending && !session) {
+            router.push("/login");
+        }
+    }, [session, isPending, router]);
 
     const isMobile = width < 1024;
     const isUltraNarrow = width < 480;
@@ -204,6 +217,28 @@ export default function DashboardLayout({
                                     className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap"
                                 >
                                     Toggle Vision
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                    </button>
+
+                    <button
+                        onClick={() => setLocale(locale === "en" ? "id" : "en")}
+                        className="w-full h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center gap-3 text-slate-400 hover:text-primary-brand transition-all group overflow-hidden"
+                    >
+                        <div className="shrink-0">
+                            <Globe className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                        </div>
+                        <AnimatePresence initial={false}>
+                            {!isZenMode && (
+                                <motion.span
+                                    initial={{ opacity: 0, width: 0 }}
+                                    animate={{ opacity: 1, width: "auto" }}
+                                    exit={{ opacity: 0, width: 0 }}
+                                    transition={SPRING_TRANSITION}
+                                    className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap"
+                                >
+                                    {locale === "en" ? "Bahasa ID" : "English"}
                                 </motion.span>
                             )}
                         </AnimatePresence>
@@ -358,29 +393,35 @@ export default function DashboardLayout({
                                 <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary-brand rounded-full border-2 border-white dark:border-slate-800"></span>
                             </button>
                             <div className="h-6 w-px bg-slate-100 dark:bg-slate-800 mx-1"></div>
-                            <Link href="/dashboard/settings" className="hidden xl:flex items-center gap-3 pr-4 border-r border-slate-100 dark:border-slate-800 mr-1 group/profile cursor-pointer relative">
+                            <div className="hidden xl:flex items-center gap-3 pr-4 border-r border-slate-100 dark:border-slate-800 mr-1 group/profile cursor-pointer relative">
                                 {!isZenMode && (
                                     <div className="text-right">
-                                        <p className="text-xs font-black group-hover/profile:text-primary-brand transition-colors">Alex Rivera</p>
-                                        <p className="text-[10px] font-bold text-slate-400">ID: #88219</p>
+                                        <p className="text-xs font-black group-hover/profile:text-primary-brand transition-colors">{session?.user?.name || "User"}</p>
+                                        <p className="text-[10px] font-bold text-slate-400">{session?.user?.email || ""}</p>
                                     </div>
                                 )}
-                                <div className="w-10 h-10 rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden shrink-0 group-hover/profile:ring-2 group-hover/profile:ring-primary-brand/20 transition-all">
-                                    <img src="https://i.pravatar.cc/100" alt="avatar" />
+                                <div className="w-10 h-10 rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden shrink-0 group-hover/profile:ring-2 group-hover/profile:ring-primary-brand/20 transition-all bg-primary-brand/10 flex items-center justify-center">
+                                    <span className="text-sm font-black text-primary-brand">{(session?.user?.name || "U").charAt(0).toUpperCase()}</span>
                                 </div>
 
-                                {/* Profile Dropdown Tooltip */}
+                                {/* Profile Dropdown */}
                                 <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover/profile:opacity-100 group-hover/profile:translate-y-0 group-hover/profile:pointer-events-auto transition-all z-50 p-2">
-                                    <div className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                        <Users className="w-3.5 h-3.5" /> Profile Settings
-                                    </div>
-                                    <Link href="/">
-                                        <button className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-red-500">
-                                            <X className="w-3.5 h-3.5" /> Terminate Session
-                                        </button>
+                                    <Link href="/dashboard/settings">
+                                        <div className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                            <Users className="w-3.5 h-3.5" /> Profile Settings
+                                        </div>
                                     </Link>
+                                    <button
+                                        onClick={async () => {
+                                            await signOut();
+                                            router.push("/login");
+                                        }}
+                                        className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-red-500"
+                                    >
+                                        <LogOut className="w-3.5 h-3.5" /> Sign Out
+                                    </button>
                                 </div>
-                            </Link>
+                            </div>
                             <Link href="/wizard">
                                 <button className="bg-primary-brand text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-xl shadow-primary-brand/20 hover:scale-105 active:scale-95 transition-all">
                                     <Plus className="w-4 h-4" /> Build

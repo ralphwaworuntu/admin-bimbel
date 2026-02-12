@@ -14,9 +14,10 @@ import {
     Check,
     CheckCircle2,
     ChevronRight,
-    Play
+    Play,
+    GripVertical
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Reorder } from "framer-motion";
 
 export function ArchitectureForm() {
     const { config, toggleSection, updateConfig } = useWizard();
@@ -48,41 +49,48 @@ export function ArchitectureForm() {
                 </p>
             </div>
 
-            {/* Section Stack Visualizer */}
+            {/* Section Stack Visualizer — Drag to Reorder */}
             <div className="p-4 rounded-3xl bg-slate-900 border border-white/10 space-y-4">
                 <div className="flex justify-between items-center">
                     <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Infrastructure Stack</Label>
                     <span className="text-[10px] font-black text-primary-brand">{(config.content.sections?.length || 0)} BLOCKS</span>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                    <AnimatePresence mode="popLayout">
+                {(config.content.sections?.length || 0) > 0 ? (
+                    <Reorder.Group
+                        axis="y"
+                        values={config.content.sections || []}
+                        onReorder={(newOrder) => updateConfig({ content: { sections: newOrder } } as any)}
+                        className="space-y-2"
+                    >
                         {config.content.sections?.map((sectionId) => {
                             const section = [...mainSections, ...trustSections].find(s => s.id === sectionId);
                             if (!section) return null;
                             return (
-                                <motion.div
+                                <Reorder.Item
                                     key={sectionId}
-                                    initial={{ scale: 0.8, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    exit={{ scale: 0.8, opacity: 0 }}
-                                    className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2"
+                                    value={sectionId}
+                                    className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2 cursor-grab active:cursor-grabbing hover:bg-white/10 transition-colors"
+                                    whileDrag={{ scale: 1.05, boxShadow: "0 10px 30px rgba(0,0,0,0.3)" }}
                                 >
-                                    <section.icon className="w-3 h-3 text-primary-brand" />
-                                    <span className="text-[10px] font-bold text-slate-300">{section.label}</span>
+                                    <GripVertical className="w-3 h-3 text-slate-600 shrink-0" />
+                                    <section.icon className="w-3 h-3 text-primary-brand shrink-0" />
+                                    <span className="text-[10px] font-bold text-slate-300 flex-1">{section.label}</span>
                                     <button
                                         onClick={() => toggleSection(sectionId)}
-                                        className="hover:text-rose-500 transition-colors"
+                                        className="hover:text-rose-500 transition-colors text-slate-500"
                                     >
                                         <CheckCircle2 className="w-3 h-3" />
                                     </button>
-                                </motion.div>
+                                </Reorder.Item>
                             );
                         })}
-                        {(config.content.sections?.length || 0) === 0 && (
-                            <p className="text-[10px] font-medium text-slate-600 italic">No blocks selected yet. Build your stack below.</p>
-                        )}
-                    </AnimatePresence>
-                </div>
+                    </Reorder.Group>
+                ) : (
+                    <p className="text-[10px] font-medium text-slate-600 italic">No blocks selected yet. Build your stack below.</p>
+                )}
+                {(config.content.sections?.length || 0) > 1 && (
+                    <p className="text-[8px] font-bold text-slate-600 uppercase tracking-widest text-center pt-1">↕ Drag to reorder sections</p>
+                )}
             </div>
 
             <div className="space-y-6">

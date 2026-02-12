@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CommandPalette } from "@/components/command-palette";
+import { I18nProvider } from "@/lib/i18n";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,6 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.BETTER_AUTH_URL || "http://localhost:3000"),
   title: "InstantEngine | Premium WaaS Builder for Modern Brands",
   description: "Launch high-performance, beautiful websites in minutes with our AI-powered template engine. Optimized for speed, aesthetics, and conversion.",
   keywords: ["WaaS", "Website Builder", "AI Website", "Modern Design", "InstantEngine", "Template Engine"],
@@ -52,10 +54,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased selection:bg-primary-brand/30 selection:text-primary-brand`}
       >
         <ThemeProvider>
-          <CommandPalette />
-          <div className="page-transition-wrapper min-h-screen">
-            {children}
-          </div>
+          <I18nProvider>
+            <CommandPalette />
+            <div className="page-transition-wrapper min-h-screen">
+              {children}
+            </div>
+          </I18nProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useWizard } from "../wizard-context";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Palette, Layers, Zap, Shield, Sparkles, X, Image as ImageIcon } from "lucide-react";
+import { Palette, Layers, Zap, Shield, Sparkles, X, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function IdentityForm() {
