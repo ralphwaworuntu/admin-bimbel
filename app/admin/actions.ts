@@ -15,7 +15,7 @@ async function checkAdmin() {
 
 export async function deleteUserAction(userId: string) {
     await checkAdmin();
-    deleteUser(userId);
+    await deleteUser(userId);
     revalidatePath("/admin/users");
     revalidatePath("/admin");
 }
@@ -23,13 +23,13 @@ export async function deleteUserAction(userId: string) {
 export async function toggleAdminRoleAction(userId: string, currentRole: string) {
     await checkAdmin();
     const newRole = currentRole === "admin" ? "user" : "admin";
-    updateUserRole(userId, newRole);
+    await updateUserRole(userId, newRole);
     revalidatePath("/admin/users");
 }
 
 export async function deleteSiteAction(siteId: string) {
     await checkAdmin();
-    deleteSite(siteId);
+    await deleteSite(siteId);
     revalidatePath("/admin/sites");
     revalidatePath("/admin");
 }

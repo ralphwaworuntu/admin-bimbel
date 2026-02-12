@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         const brandName = config.identity.brandName;
         const templateId = config.templateId;
 
-        const result = createSite(session.user.id, brandName, config, templateId);
+        const result = await createSite(session.user.id, brandName, config, templateId);
 
         return NextResponse.json({
             success: true,
@@ -60,7 +60,7 @@ export async function GET() {
             );
         }
 
-        const sites = getSitesByUser(session.user.id);
+        const sites = await getSitesByUser(session.user.id);
 
         return NextResponse.json({ sites });
     } catch (error) {

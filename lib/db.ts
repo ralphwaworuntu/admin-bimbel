@@ -1,159 +1,100 @@
-import Database from "better-sqlite3";
-import path from "path";
+import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
+import * as schema from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { sites, users } from "@/db/schema";
 
-// Reuse the same SQLite database as Better Auth
-const dbPath = path.join(process.cwd(), "auth.db");
+// --- Database Connection ---
 
-let db: ReturnType<typeof Database> | null = null;
+const poolConnection = mysql.createPool({
+    host: process.env.MYSQL_HOST || "localhost",
+    user: process.env.MYSQL_USER || "root",
+    password: process.env.MYSQL_PASSWORD || "",
+    database: process.env.MYSQL_DATABASE || "waas_builder",
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
 
-function getDb() {
-    if (!db) {
-        db = new Database(dbPath);
-        db.pragma("journal_mode = WAL");
-        initTables();
-    }
-    return db;
-}
-
-function initTables() {
-    const database = db!;
-
-    database.exec(`
-        CREATE TABLE IF NOT EXISTS sites (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            subdomain TEXT,
-            template_id TEXT,
-            config TEXT NOT NULL,
-            status TEXT DEFAULT 'draft',
-            deployment_url TEXT,
-            created_at TEXT DEFAULT (datetime('now')),
-            updated_at TEXT DEFAULT (datetime('now'))
-        )
-    `);
-}
+export const db = drizzle(poolConnection, { schema, mode: "default" });
 
 // --- SITE OPERATIONS ---
 
-export function createSite(userId: string, name: string, config: any, templateId?: string) {
-    const database = getDb();
+export async function createSite(userId: string, name: string, config: any, templateId?: string) {
     const id = "site-" + Math.random().toString(36).substr(2, 9);
     const subdomain = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
     const deploymentUrl = `https://${subdomain}.waas.site`;
+    const now = new Date();
 
-    const stmt = database.prepare(`
-        INSERT INTO sites (id, user_id, name, subdomain, template_id, config, status, deployment_url)
-        VALUES (?, ?, ?, ?, ?, ?, 'active', ?)
-    `);
-
-    stmt.run(id, userId, name, subdomain, templateId || null, JSON.stringify(config), deploymentUrl);
+    await db.insert(sites).values({
+        id,
+        userId,
+        name,
+        subdomain,
+        templateId: templateId || undefined,
+        config: config,
+        status: "active",
+        deploymentUrl,
+        createdAt: now,
+        updatedAt: now,
+    });
 
     return { id, subdomain, deploymentUrl, status: "active" };
 }
 
-export function getSitesByUser(userId: string) {
-    const database = getDb();
-    const stmt = database.prepare("SELECT * FROM sites WHERE user_id = ? ORDER BY created_at DESC");
-    const rows = stmt.all(userId) as any[];
-
-    return rows.map((row) => ({
-        ...row,
-        config: JSON.parse(row.config),
-    }));
+export async function getSitesByUser(userId: string) {
+    return await db.query.sites.findMany({
+        where: eq(sites.userId, userId),
+        orderBy: [desc(sites.createdAt)],
+    });
 }
 
-export function getAllSites() {
-    const database = getDb();
-    const stmt = database.prepare("SELECT * FROM sites ORDER BY created_at DESC");
-    const rows = stmt.all() as any[];
-
-    return rows.map((row) => ({
-        ...row,
-        config: JSON.parse(row.config),
-    }));
+export async function getAllSites() {
+    return await db.query.sites.findMany({
+        orderBy: [desc(sites.createdAt)],
+    });
 }
 
-export function getSiteById(siteId: string) {
-    const database = getDb();
-    const stmt = database.prepare("SELECT * FROM sites WHERE id = ?");
-    const row = stmt.get(siteId) as any;
-    if (!row) return null;
-
-    return {
-        ...row,
-        config: JSON.parse(row.config),
-    };
+export async function getSiteById(siteId: string) {
+    return await db.query.sites.findFirst({
+        where: eq(sites.id, siteId),
+    });
 }
 
-export function updateSite(siteId: string, updates: { name?: string; config?: any; status?: string; deployment_url?: string }) {
-    const database = getDb();
-    const fields: string[] = [];
-    const values: any[] = [];
+// Partial update helper
+export async function updateSite(siteId: string, updates: { name?: string; config?: any; status?: string; deployment_url?: string }) {
+    const updateData: any = {};
+    if (updates.name) updateData.name = updates.name;
+    if (updates.config) updateData.config = updates.config;
+    if (updates.status) updateData.status = updates.status;
+    if (updates.deployment_url) updateData.deploymentUrl = updates.deployment_url;
 
-    if (updates.name) {
-        fields.push("name = ?");
-        values.push(updates.name);
-    }
-    if (updates.config) {
-        fields.push("config = ?");
-        values.push(JSON.stringify(updates.config));
-    }
-    if (updates.status) {
-        fields.push("status = ?");
-        values.push(updates.status);
-    }
-    if (updates.deployment_url) {
-        fields.push("deployment_url = ?");
-        values.push(updates.deployment_url);
-    }
+    // Manually update timestamp
+    updateData.updatedAt = new Date();
 
-    fields.push("updated_at = datetime('now')");
-    values.push(siteId);
-
-    const stmt = database.prepare(`UPDATE sites SET ${fields.join(", ")} WHERE id = ?`);
-    return stmt.run(...values);
+    await db.update(sites)
+        .set(updateData)
+        .where(eq(sites.id, siteId));
 }
 
-export function deleteSite(siteId: string) {
-    const database = getDb();
-    const stmt = database.prepare("DELETE FROM sites WHERE id = ?");
-    return stmt.run(siteId);
+export async function deleteSite(siteId: string) {
+    await db.delete(sites).where(eq(sites.id, siteId));
 }
 
 // --- USER OPERATIONS ---
 
-export function getAllUsers() {
-    const database = getDb();
-    // Better Auth 'user' table
-    try {
-        const stmt = database.prepare("SELECT id, name, email, role, createdAt, image FROM user ORDER BY createdAt DESC");
-        return stmt.all() as any[];
-    } catch (e) {
-        return []; // Table might not exist yet if no users
-    }
-}
-
-export function updateUserRole(userId: string, role: string) {
-    const database = getDb();
-    const stmt = database.prepare("UPDATE user SET role = ? WHERE id = ?");
-    return stmt.run(role, userId);
-}
-
-export function deleteUser(userId: string) {
-    const database = getDb();
-
-    const deleteUserStmt = database.prepare("DELETE FROM user WHERE id = ?");
-    const deleteSessionStmt = database.prepare("DELETE FROM session WHERE userId = ?");
-    const deleteAccountStmt = database.prepare("DELETE FROM account WHERE userId = ?");
-    const deleteSitesStmt = database.prepare("DELETE FROM sites WHERE user_id = ?");
-
-    const transaction = database.transaction(() => {
-        deleteUserStmt.run(userId);
-        deleteSessionStmt.run(userId);
-        deleteAccountStmt.run(userId);
-        deleteSitesStmt.run(userId);
+export async function getAllUsers() {
+    return await db.query.users.findMany({
+        orderBy: [desc(users.createdAt)],
     });
+}
 
-    return transaction();
+export async function updateUserRole(userId: string, role: string) {
+    await db.update(users)
+        .set({ role })
+        .where(eq(users.id, userId));
+}
+
+export async function deleteUser(userId: string) {
+    await db.delete(users).where(eq(users.id, userId));
 }

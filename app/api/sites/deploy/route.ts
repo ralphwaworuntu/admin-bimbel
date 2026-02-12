@@ -20,7 +20,7 @@ export async function POST(request: Request) {
         }
 
         // 2. Site ownership check
-        const site = getSiteById(siteId);
+        const site = await getSiteById(siteId);
         if (!site) {
             return NextResponse.json({ error: "Site not found" }, { status: 404 });
         }
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
         const result = await deploymentProvider.deploy(siteId, site.config);
 
         if (result.success && result.url) {
-            updateSite(siteId, {
+            await updateSite(siteId, {
                 status: "deployed",
                 deployment_url: result.url
             });

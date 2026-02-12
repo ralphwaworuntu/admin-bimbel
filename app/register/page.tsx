@@ -26,23 +26,7 @@ export default function RegisterPage() {
 
         setLoading(true);
 
-        try {
-            const result = await signUp.email({
-                name,
-                email,
-                password,
-            });
 
-            if (result.error) {
-                setError(result.error.message || "Registration failed. Please try again.");
-            } else {
-                router.push("/dashboard");
-            }
-        } catch (err: any) {
-            setError(err?.message || "An unexpected error occurred.");
-        } finally {
-            setLoading(false);
-        }
     };
 
     return (

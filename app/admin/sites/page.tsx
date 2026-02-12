@@ -4,7 +4,7 @@ import { Trash2, ExternalLink, Globe } from "lucide-react";
 import Link from "next/link";
 
 export default async function AdminSitesPage() {
-    const sites = getAllSites();
+    const sites = await getAllSites();
 
     return (
         <div className="p-8">
@@ -52,7 +52,7 @@ export default async function AdminSitesPage() {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-slate-500">
-                                    {new Date(site.created_at).toLocaleDateString()}
+                                    {site.createdAt ? new Date(site.createdAt).toLocaleDateString() : 'N/A'}
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2">
@@ -68,11 +68,6 @@ export default async function AdminSitesPage() {
                                             <button
                                                 title="Force Delete Site"
                                                 className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-slate-400 hover:text-red-600 transition-colors"
-                                                onClick={(e) => {
-                                                    if (!confirm("Are you sure you want to force delete this site?")) {
-                                                        e.preventDefault();
-                                                    }
-                                                }}
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>

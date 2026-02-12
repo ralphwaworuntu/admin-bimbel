@@ -3,7 +3,7 @@ import { deleteUserAction, toggleAdminRoleAction } from "../actions";
 import { Trash2, Shield, ShieldAlert, User } from "lucide-react";
 
 export default async function AdminUsersPage() {
-    const users = getAllUsers();
+    const users = await getAllUsers();
 
     return (
         <div className="p-8">
@@ -34,7 +34,7 @@ export default async function AdminUsersPage() {
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
                                             {user.image ? (
-                                                <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                                                <img src={user.image} alt={user.name!} className="w-full h-full object-cover" />
                                             ) : (
                                                 <User className="w-4 h-4 text-slate-400" />
                                             )}
@@ -47,8 +47,8 @@ export default async function AdminUsersPage() {
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${user.role === 'admin'
-                                            ? 'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800'
-                                            : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                                        ? 'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800'
+                                        : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
                                         }`}>
                                         {user.role === 'admin' ? <ShieldAlert className="w-3 h-3" /> : <User className="w-3 h-3" />}
                                         <span className="capitalize">{user.role || 'user'}</span>
@@ -72,11 +72,6 @@ export default async function AdminUsersPage() {
                                             <button
                                                 title="Delete User"
                                                 className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-slate-400 hover:text-red-600 transition-colors"
-                                                onClick={(e) => {
-                                                    if (!confirm("Are you sure you want to delete this user? This cannot be undone.")) {
-                                                        e.preventDefault();
-                                                    }
-                                                }}
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
