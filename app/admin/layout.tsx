@@ -2,7 +2,8 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, LayoutDashboard, Settings, Globe, LogOut } from "lucide-react";
+import { Users, LayoutDashboard, Settings, Globe } from "lucide-react";
+import { AdminLogoutButton } from "@/components/admin/logout-button";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
     const session = await auth.api.getSession({
@@ -44,6 +45,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                         All Sites
                     </Link>
                 </nav>
+
+                <div className="px-4 py-2 border-t border-slate-200 dark:border-slate-800">
+                    <AdminLogoutButton />
+                </div>
 
                 <div className="p-4 border-t border-slate-200 dark:border-slate-800">
                     <div className="flex items-center gap-3 px-3 py-2">
