@@ -40,7 +40,12 @@ export default function LoginPage() {
             if (result.error) {
                 setError(result.error.message || "Login failed. Please check your credentials.");
             } else {
-                router.push("/dashboard");
+                // Check user role for redirect
+                if (result.data?.user?.role === "admin") {
+                    router.push("/admin");
+                } else {
+                    router.push("/dashboard");
+                }
             }
         } catch (err: any) {
             setError(err?.message || "An unexpected error occurred.");
