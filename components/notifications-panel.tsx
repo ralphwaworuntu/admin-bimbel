@@ -13,7 +13,7 @@ import {
     ChevronRight,
     Settings
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 interface Notification {
@@ -33,7 +33,28 @@ const initialNotifications: Notification[] = [
 ];
 
 export function NotificationPanel({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
-    const [notifications, setNotifications] = useState(initialNotifications);
+    const [notifications, setNotifications] = useState<any[]>(initialNotifications);
+
+    useEffect(() => {
+        if (isOpen) {
+            fetch("/api/broadcasts")
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        const broadcasts = data.map(bc => ({
+                            id: bc.id,
+                            title: bc.title,
+                            description: bc.message,
+                            time: "Just now", // In a real app, calculate relative time
+                            type: bc.type || "system",
+                            isRead: false
+                        }));
+                        setNotifications([...broadcasts, ...initialNotifications]);
+                    }
+                })
+                .catch(err => console.error("Failed to sync notifications", err));
+        }
+    }, [isOpen]);
 
     const markAllAsRead = () => {
         setNotifications(notifications.map(n => ({ ...n, isRead: true })));

@@ -15,8 +15,11 @@ import {
     ChevronRight,
     Terminal,
     Sparkles,
+    Brain,
     Shield,
-    TrendingUp
+    TrendingUp,
+    Clock,
+    Megaphone
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -47,6 +50,13 @@ export function CommandHUD() {
         { id: "ai", label: "AI Oracle Simulation", icon: Sparkles, href: "/nexus", category: "Intelligence" },
         { id: "profile", label: "Profile Settings", icon: Users, href: "/dashboard/settings", category: "Account" },
         { id: "logout", label: "Terminate Session", icon: X, href: "/", category: "Account" },
+
+        // Tactical Admin Protocols (Phase 10)
+        { id: "admin-analytics", label: "Nexus Analytics Pulse", icon: Activity, href: "/admin/analytics", category: "Tactical Admin" },
+        { id: "admin-broadcast", label: "Initiate Global Broadcast", icon: Megaphone, href: "/admin/broadcast", category: "Tactical Admin" },
+        { id: "admin-oracle", label: "Consult AI Oracle", icon: Brain, href: "/admin/oracle", category: "Tactical Admin" },
+        { id: "admin-audit", label: "Inspect Audit Manifest", icon: Clock, href: "/admin/audit", category: "Tactical Admin" },
+        { id: "admin-users", label: "Principal Management", icon: Users, href: "/admin/users", category: "Tactical Admin" },
     ];
 
     const toggleHUD = useCallback(() => setIsOpen(prev => !prev), []);

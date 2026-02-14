@@ -19,7 +19,8 @@ import {
     Maximize2,
     Menu,
     X,
-    LogOut
+    LogOut,
+    CreditCard
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -86,6 +87,7 @@ export default function DashboardLayout({
         { icon: Users, label: "Customers", href: "/dashboard/customers" },
         { icon: Shield, label: "Guardian", href: "/dashboard/guardian" },
         { icon: TrendingUp, label: "Economics", href: "/dashboard/economics" },
+        { icon: CreditCard, label: "Billing", href: "/dashboard/billing" },
         { icon: Settings, label: "Settings", href: "/dashboard/settings" },
     ];
 
