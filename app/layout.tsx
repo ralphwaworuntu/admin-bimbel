@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CommandPalette } from "@/components/command-palette";
 import { I18nProvider } from "@/lib/i18n";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -59,6 +60,22 @@ export default function RootLayout({
             <div className="page-transition-wrapper min-h-screen">
               {children}
             </div>
+            <Toaster position="top-center" />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  if ('serviceWorker' in navigator) {
+                    window.addEventListener('load', function() {
+                      navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                      }, function(err) {
+                        console.log('ServiceWorker registration failed: ', err);
+                      });
+                    });
+                  }
+                `,
+              }}
+            />
           </I18nProvider>
         </ThemeProvider>
       </body>

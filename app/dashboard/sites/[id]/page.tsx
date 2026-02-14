@@ -27,7 +27,8 @@ import {
     Bell,
     TrendingUp,
     Monitor,
-    Search
+    Search,
+    Edit3
 } from "lucide-react";
 import { NotificationPanel } from "@/components/notifications-panel";
 import Link from "next/link";
@@ -119,6 +120,11 @@ export default function SiteConsolePage({ params }: { params: Promise<{ id: stri
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
+                        <Link href={`/dashboard/sites/${id}/editor`}>
+                            <button className="px-6 py-3 bg-white text-slate-900 border border-slate-200 rounded-2xl text-xs font-black shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2">
+                                <Edit3 className="w-4 h-4" /> Open Visual Editor
+                            </button>
+                        </Link>
                         <button
                             onClick={() => setIsNotifOpen(true)}
                             className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-primary-brand transition-all relative"

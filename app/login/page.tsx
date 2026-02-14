@@ -41,7 +41,7 @@ export default function LoginPage() {
                 setError(result.error.message || "Login failed. Please check your credentials.");
             } else {
                 // Check user role for redirect
-                if (result.data?.user?.role === "admin") {
+                if ((result.data?.user as any)?.role === "admin") {
                     router.push("/admin");
                 } else {
                     router.push("/dashboard");

@@ -25,17 +25,17 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Site not found" }, { status: 404 });
         }
 
-        if (site.user_id !== session.user.id && (session.user as any).role !== "admin") {
+        if (site.userId !== session.user.id && (session.user as any).role !== "admin") {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
         // 3. Trigger Deployment
-        const result = await deploymentProvider.deploy(siteId, site.config);
+        const result = await deploymentProvider.deploy(siteId, site.config as any);
 
         if (result.success && result.url) {
             await updateSite(siteId, {
                 status: "deployed",
-                deployment_url: result.url
+                deploymentUrl: result.url
             });
         }
 
