@@ -20,11 +20,12 @@ import {
     Menu,
     X,
     LogOut,
-    CreditCard
+    CreditCard,
+    ArrowLeft
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import { NotificationPanel } from "@/components/notifications-panel";
 import { CommandHUD } from "@/components/dashboard/command-hud";
 import { ProphecyEngine } from "@/components/dashboard/prophecy-engine";
@@ -40,20 +41,6 @@ const SPRING_TRANSITION = {
     restDelta: 0.001
 };
 
-// Custom hook for resilient window size tracking
-function useWindowSize() {
-    const [size, setSize] = useState<[number, number]>([0, 0]);
-    useLayoutEffect(() => {
-        function updateSize() {
-            setSize([window.innerWidth, window.innerHeight]);
-        }
-        window.addEventListener('resize', updateSize, { passive: true });
-        updateSize();
-        return () => window.removeEventListener('resize', updateSize);
-    }, []);
-    return size;
-}
-
 export default function DashboardLayout({
     children,
 }: {
@@ -62,13 +49,11 @@ export default function DashboardLayout({
     const [isNotifOpen, setIsNotifOpen] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(true);
     const [isZenMode, setIsZenMode] = useState(false);
-    const [hasOverriddenZen, setHasOverriddenZen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [width] = useWindowSize();
     const pathname = usePathname();
     const router = useRouter();
     const { data: session, isPending } = useSession();
-    const { locale, setLocale, t } = useTranslation();
+    const { locale, setLocale } = useTranslation();
 
     // Auth guard — redirect to login if not authenticated
     useEffect(() => {
@@ -76,9 +61,6 @@ export default function DashboardLayout({
             router.push("/login");
         }
     }, [session, isPending, router]);
-
-    const isMobile = width < 1024;
-    const isUltraNarrow = width < 480;
 
     const menuItems = [
         { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
@@ -91,40 +73,29 @@ export default function DashboardLayout({
         { icon: Settings, label: "Settings", href: "/dashboard/settings" },
     ];
 
-    // Auto-Zen Orchestration: Automatically collapse sidebar in narrow desktop views
-    // respects manual user toggle until next wide-scale resize
-    useEffect(() => {
-        if (isMobile) return;
-
-        if (!hasOverriddenZen) {
-            if (width >= 1024 && width <= 1366) {
-                setIsZenMode(true);
-            } else if (width > 1366) {
-                setIsZenMode(false);
-            }
-        }
-    }, [width, isMobile, hasOverriddenZen]);
-
-    // Close mobile menu on route change or when expanding to desktop
+    // Close mobile menu on route change
     useEffect(() => {
         setIsMobileMenuOpen(false);
-    }, [pathname, isMobile]);
+    }, [pathname]);
+
+    const handleLogout = async () => {
+        await signOut();
+        router.push("/login");
+    };
 
     return (
-        <div className={`flex min-h-screen font-sans selection:bg-primary-brand/20 transition-colors duration-700 ${isDarkMode ? 'dark bg-[#020617] text-white' : 'bg-slate-50 text-slate-900'}`}>
+        <div className={`flex min-h-screen font-sans selection:bg-primary-brand/20 transition-colors duration-700 ${isDarkMode ? 'dark bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}>
             <CommandHUD />
             <ProphecyEngine />
 
-            {/* Sidebar Navigation - Fixed on Desktop, Adaptive Width */}
+            {/* Sidebar Navigation - Fixed on Desktop, Adaptive Width via CSS */}
             <motion.aside
                 initial={false}
                 animate={{
                     width: isZenMode ? "80px" : "320px",
-                    x: isMobile ? -320 : 0,
-                    opacity: isMobile ? 0 : 1
                 }}
                 transition={SPRING_TRANSITION}
-                className={`fixed inset-y-0 left-0 border-r border-slate-100 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-900 z-50 overflow-hidden select-none`}
+                className={`hidden lg:flex fixed inset-y-0 left-0 border-r border-zinc-200 dark:border-zinc-800 flex-col bg-white dark:bg-zinc-900 z-50 overflow-hidden select-none`}
             >
                 <div className={`p-8 flex items-center ${isZenMode ? "justify-center" : "gap-3"} shrink-0 h-28 transition-all`}>
                     <motion.div
@@ -154,7 +125,7 @@ export default function DashboardLayout({
                         return (
                             <Link key={item.label} href={item.href}>
                                 <button
-                                    className={`w-full group flex items-center ${isZenMode ? "justify-center" : "justify-start gap-4"} p-4 rounded-2xl transition-all mb-1 relative overflow-hidden ${isActive ? "bg-primary-brand/10 text-primary-brand shadow-sm" : "text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+                                    className={`w-full group flex items-center ${isZenMode ? "justify-center" : "justify-start gap-4"} p-4 rounded-2xl transition-all mb-1 relative overflow-hidden ${isActive ? "bg-primary-brand/10 text-primary-brand shadow-sm" : "text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
                                 >
                                     <item.icon className="w-5 h-5 shrink-0" />
                                     <AnimatePresence initial={false}>
@@ -176,13 +147,10 @@ export default function DashboardLayout({
                     })}
                 </nav>
 
-                <div className="p-6 space-y-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
+                <div className="p-6 space-y-3 border-t border-zinc-200 dark:border-zinc-800 shrink-0">
                     <button
-                        onClick={() => {
-                            setIsZenMode(!isZenMode);
-                            setHasOverriddenZen(true);
-                        }}
-                        className={`w-full h-12 rounded-xl flex items-center justify-center gap-3 text-slate-400 hover:text-primary-brand transition-all group overflow-hidden ${isZenMode ? "bg-primary-brand/10 text-primary-brand" : "bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700"}`}
+                        onClick={() => setIsZenMode(!isZenMode)}
+                        className={`w-full h-12 rounded-xl flex items-center justify-center gap-3 text-zinc-400 hover:text-primary-brand transition-all group overflow-hidden ${isZenMode ? "bg-primary-brand/10 text-primary-brand" : "bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700"}`}
                     >
                         <div className="shrink-0">
                             {isZenMode ? <Maximize2 className="w-4 h-4" /> : <Target className="w-4 h-4 group-hover:scale-110 transition-transform" />}
@@ -204,7 +172,7 @@ export default function DashboardLayout({
 
                     <button
                         onClick={() => setIsDarkMode(!isDarkMode)}
-                        className="w-full h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center gap-3 text-slate-400 hover:text-primary-brand transition-all group overflow-hidden"
+                        className="w-full h-12 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 flex items-center justify-center gap-3 text-zinc-400 hover:text-primary-brand transition-all group overflow-hidden"
                     >
                         <div className="shrink-0">
                             {isDarkMode ? <Sun className="w-4 h-4 group-hover:rotate-90 transition-transform" /> : <Moon className="w-4 h-4 group-hover:-rotate-12 transition-transform" />}
@@ -226,7 +194,7 @@ export default function DashboardLayout({
 
                     <button
                         onClick={() => setLocale(locale === "en" ? "id" : "en")}
-                        className="w-full h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center gap-3 text-slate-400 hover:text-primary-brand transition-all group overflow-hidden"
+                        className="w-full h-12 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 flex items-center justify-center gap-3 text-zinc-400 hover:text-primary-brand transition-all group overflow-hidden"
                     >
                         <div className="shrink-0">
                             <Globe className="w-4 h-4 group-hover:rotate-12 transition-transform" />
@@ -253,13 +221,13 @@ export default function DashboardLayout({
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 10 }}
                                 transition={SPRING_TRANSITION}
-                                className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 overflow-hidden"
+                                className="flex items-center gap-4 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 overflow-hidden"
                             >
                                 <div className="w-10 h-10 rounded-xl bg-primary-brand/10 flex items-center justify-center text-primary-brand shrink-0">
                                     <Shield className="w-5 h-5" />
                                 </div>
                                 <div className="whitespace-nowrap">
-                                    <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Status</p>
+                                    <p className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Status</p>
                                     <p className="text-xs font-black">Elite</p>
                                 </div>
                             </motion.div>
@@ -269,42 +237,33 @@ export default function DashboardLayout({
             </motion.aside>
 
             {/* Mobile / Tablet Header */}
-            <AnimatePresence>
-                {isMobile && !isZenMode && (
-                    <motion.div
-                        initial={{ y: -80 }}
-                        animate={{ y: 0 }}
-                        exit={{ y: -80 }}
-                        className="fixed top-0 left-0 right-0 h-20 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 z-[60] flex items-center justify-between px-6"
+            <div className={`fixed top-0 left-0 right-0 h-20 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-100 dark:border-zinc-800 z-[60] flex items-center justify-between px-6 lg:hidden`}>
+                <Zap className="w-6 h-6 text-primary-brand fill-primary-brand" />
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => setIsNotifOpen(true)}
+                        className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center text-zinc-500"
                     >
-                        <Zap className="w-6 h-6 text-primary-brand fill-primary-brand" />
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => setIsNotifOpen(true)}
-                                className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-500"
-                            >
-                                <Bell className="w-5 h-5" />
-                            </button>
-                            <button
-                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                                className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center"
-                            >
-                                {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                            </button>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        <Bell className="w-5 h-5" />
+                    </button>
+                    <button
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="w-10 h-10 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center"
+                    >
+                        {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                    </button>
+                </div>
+            </div>
 
             {/* Mobile Menu Overlay */}
             <AnimatePresence>
-                {isMobile && isMobileMenuOpen && (
+                {isMobileMenuOpen && (
                     <motion.div
-                        initial={{ opacity: 0, x: -width }}
+                        initial={{ opacity: 0, x: "-100%" }}
                         animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -width }}
+                        exit={{ opacity: 0, x: "-100%" }}
                         transition={SPRING_TRANSITION}
-                        className="fixed inset-0 top-20 bg-white dark:bg-slate-950 z-[55] p-6 lg:p-8 overflow-y-auto"
+                        className="fixed inset-0 top-20 bg-white dark:bg-zinc-950 z-[55] p-6 lg:p-8 overflow-y-auto lg:hidden"
                     >
                         <div className="space-y-1">
                             {menuItems.map((item) => {
@@ -312,7 +271,7 @@ export default function DashboardLayout({
                                 return (
                                     <Link key={item.label} href={item.href}>
                                         <button
-                                            className={`w-full flex items-center gap-4 p-5 rounded-2xl transition-all ${isActive ? "bg-primary-brand/10 text-primary-brand" : "text-slate-400"}`}
+                                            className={`w-full flex items-center gap-4 p-5 rounded-2xl transition-all ${isActive ? "bg-primary-brand/10 text-primary-brand" : "text-zinc-400"}`}
                                         >
                                             <item.icon className="w-6 h-6 shrink-0" />
                                             <span className="font-black text-sm uppercase tracking-widest">{item.label}</span>
@@ -321,10 +280,10 @@ export default function DashboardLayout({
                                 );
                             })}
                         </div>
-                        <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-4">
+                        <div className="mt-8 pt-8 border-t border-zinc-100 dark:border-zinc-800 grid grid-cols-2 gap-4">
                             <button
                                 onClick={() => setIsDarkMode(!isDarkMode)}
-                                className="h-16 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center gap-1 text-slate-400"
+                                className="h-16 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex flex-col items-center justify-center gap-1 text-zinc-400"
                             >
                                 {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                                 <span className="text-[9px] font-black uppercase tracking-widest">Vision</span>
@@ -338,105 +297,98 @@ export default function DashboardLayout({
                 )}
             </AnimatePresence>
 
-            {/* Main Content Area - Resilient Padding */}
-            <motion.div
-                animate={{
-                    paddingLeft: isMobile ? 0 : (isZenMode ? 80 : 320),
-                    paddingTop: isMobile ? 80 : 0
-                }}
-                transition={SPRING_TRANSITION}
-                className="flex-1 flex flex-col min-h-screen relative"
+            {/* Main Content Area - Responsive CSS Padding */}
+            <div
+                className={`flex-1 flex flex-col min-h-screen relative transition-all duration-300 ${isZenMode ? 'lg:pl-[80px]' : 'lg:pl-[320px]'} pt-20 lg:pt-0`}
             >
                 {/* Desktop Top Header - Intelligent Visibility */}
-                {!isMobile && (
-                    <header className="h-24 px-8 lg:px-12 flex items-center justify-between bg-white/50 dark:bg-slate-900/50 backdrop-blur-3xl sticky top-0 z-40 border-b border-slate-100 dark:border-slate-800">
-                        <div className="flex items-center gap-6 flex-1 max-w-xl">
-                            <AnimatePresence mode="wait" initial={false}>
-                                {!isZenMode ? (
-                                    <motion.div
-                                        key="search"
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -20 }}
-                                        transition={SPRING_TRANSITION}
-                                        className="relative w-full group cursor-pointer"
-                                        onClick={() => window.dispatchEvent(new CustomEvent('open-command-hud'))}
-                                    >
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-primary-brand transition-colors" />
-                                        <input
-                                            type="text"
-                                            readOnly
-                                            placeholder="Command Center (Cmd+K)"
-                                            className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-3 pl-12 pr-4 text-xs font-bold focus:ring-2 focus:ring-primary-brand/20 transition-all outline-none cursor-pointer group-hover:bg-slate-100 dark:group-hover:bg-slate-700"
-                                        />
-                                    </motion.div>
-                                ) : (
-                                    <motion.div
-                                        key="zen"
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -20 }}
-                                        transition={SPRING_TRANSITION}
-                                        className="flex items-center gap-4"
-                                    >
-                                        <Target className="w-4 h-4 text-primary-brand animate-pulse" />
-                                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Deep Focus Orchestration</span>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
+                <header className="hidden lg:flex h-24 px-8 lg:px-12 items-center justify-between bg-white/50 dark:bg-zinc-900/50 backdrop-blur-3xl sticky top-0 z-40 border-b border-zinc-200 dark:border-zinc-800">
+                    <div className="flex items-center gap-6 flex-1 max-w-xl">
+                        <AnimatePresence mode="wait" initial={false}>
+                            {!isZenMode ? (
+                                <motion.div
+                                    key="search"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={SPRING_TRANSITION}
+                                    className="relative w-full group cursor-pointer"
+                                    onClick={() => window.dispatchEvent(new CustomEvent('open-command-hud'))}
+                                >
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-hover:text-primary-brand transition-colors" />
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        placeholder="Command Center (Cmd+K)"
+                                        className="w-full bg-zinc-50 dark:bg-zinc-800 border-none rounded-2xl py-3 pl-12 pr-4 text-xs font-bold focus:ring-2 focus:ring-primary-brand/20 transition-all outline-none cursor-pointer group-hover:bg-zinc-100 dark:group-hover:bg-zinc-700"
+                                    />
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="zen"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={SPRING_TRANSITION}
+                                    className="flex items-center gap-4"
+                                >
+                                    <Target className="w-4 h-4 text-primary-brand animate-pulse" />
+                                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Deep Focus Orchestration</span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
 
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => setIsNotifOpen(true)}
-                                className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:text-primary-brand transition-all relative"
-                            >
-                                <Bell className="w-5 h-5" />
-                                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary-brand rounded-full border-2 border-white dark:border-slate-800"></span>
-                            </button>
-                            <div className="h-6 w-px bg-slate-100 dark:bg-slate-800 mx-1"></div>
-                            <div className="hidden xl:flex items-center gap-3 pr-4 border-r border-slate-100 dark:border-slate-800 mr-1 group/profile cursor-pointer relative">
-                                {!isZenMode && (
-                                    <div className="text-right">
-                                        <p className="text-xs font-black group-hover/profile:text-primary-brand transition-colors">{session?.user?.name || "User"}</p>
-                                        <p className="text-[10px] font-bold text-slate-400">{session?.user?.email || ""}</p>
-                                    </div>
-                                )}
-                                <div className="w-10 h-10 rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden shrink-0 group-hover/profile:ring-2 group-hover/profile:ring-primary-brand/20 transition-all bg-primary-brand/10 flex items-center justify-center">
-                                    <span className="text-sm font-black text-primary-brand">{(session?.user?.name || "U").charAt(0).toUpperCase()}</span>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setIsNotifOpen(true)}
+                            className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 flex items-center justify-center text-zinc-500 hover:text-primary-brand transition-all relative"
+                        >
+                            <Bell className="w-5 h-5" />
+                            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary-brand rounded-full border-2 border-white dark:border-zinc-800"></span>
+                        </button>
+                        <div className="h-6 w-px bg-zinc-100 dark:bg-zinc-800 mx-1"></div>
+                        <div className="hidden xl:flex items-center gap-3 pr-4 border-r border-zinc-200 dark:border-zinc-800 mr-1 group/profile cursor-pointer relative">
+                            {!isZenMode && (
+                                <div className="text-right">
+                                    <p className="text-xs font-black group-hover/profile:text-primary-brand transition-colors">{session?.user?.name || "User"}</p>
+                                    <p className="text-[10px] font-bold text-zinc-400">{session?.user?.email || ""}</p>
                                 </div>
-
-                                {/* Profile Dropdown */}
-                                <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover/profile:opacity-100 group-hover/profile:translate-y-0 group-hover/profile:pointer-events-auto transition-all z-50 p-2">
-                                    <Link href="/dashboard/settings">
-                                        <div className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                            <Users className="w-3.5 h-3.5" /> Profile Settings
-                                        </div>
-                                    </Link>
-                                    <button
-                                        onClick={async () => {
-                                            await signOut();
-                                            router.push("/login");
-                                        }}
-                                        className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-red-500"
-                                    >
-                                        <LogOut className="w-3.5 h-3.5" /> Sign Out
-                                    </button>
-                                </div>
+                            )}
+                            <div className="w-10 h-10 rounded-xl border border-zinc-100 dark:border-zinc-700 overflow-hidden shrink-0 group-hover/profile:ring-2 group-hover/profile:ring-primary-brand/20 transition-all bg-primary-brand/10 flex items-center justify-center">
+                                <span className="text-sm font-black text-primary-brand">{(session?.user?.name || "U").charAt(0).toUpperCase()}</span>
                             </div>
-                            <Link href="/wizard">
-                                <button className="bg-primary-brand text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-xl shadow-primary-brand/20 hover:scale-105 active:scale-95 transition-all">
-                                    <Plus className="w-4 h-4" /> Build
+
+                            {/* Profile Dropdown */}
+                            <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover/profile:opacity-100 group-hover/profile:translate-y-0 group-hover/profile:pointer-events-auto transition-all z-50 p-2">
+                                <Link href="/dashboard/settings">
+                                    <div className="w-full text-left p-3 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                                        <Users className="w-3.5 h-3.5" /> Profile Settings
+                                    </div>
+                                </Link>
+                                <button
+                                    onClick={async () => {
+                                        await signOut();
+                                        router.push("/login");
+                                    }}
+                                    className="w-full text-left p-3 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-red-500"
+                                >
+                                    <LogOut className="w-3.5 h-3.5" /> Sign Out
                                 </button>
-                            </Link>
+                            </div>
                         </div>
-                    </header>
-                )}
+                        <Link href="/wizard">
+                            <button className="bg-primary-brand text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-xl shadow-primary-brand/20 hover:scale-105 active:scale-95 transition-all">
+                                <Plus className="w-4 h-4" /> Build
+                            </button>
+                        </Link>
+                    </div>
+                </header>
 
                 <main className="flex-1 overflow-x-hidden p-6 sm:p-10 lg:p-12 xl:p-16">
                     <AnimatePresence mode="wait">
                         <motion.div
-                            key={pathname + (isZenMode ? '-zen' : '') + (isMobile ? '-mobile' : '-desktop')}
+                            key={pathname + (isZenMode ? '-zen' : '')}
                             initial={{ opacity: 0, scale: 0.98 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.98 }}
@@ -448,7 +400,7 @@ export default function DashboardLayout({
                     </AnimatePresence>
                 </main>
 
-                <footer className="p-8 lg:p-12 flex flex-col sm:flex-row items-center justify-between border-t border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 gap-6 text-center sm:text-left overflow-hidden">
+                <footer className="p-8 lg:p-12 flex flex-col sm:flex-row items-center justify-between border-t border-zinc-200 dark:border-zinc-800 text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 gap-6 text-center sm:text-left overflow-hidden">
                     <p className="truncate flex items-center gap-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                         © 2026 EngineAI Sovereign Infrastructure
@@ -457,7 +409,7 @@ export default function DashboardLayout({
                         <Link href="/dashboard/settings/security">
                             <button className="hover:text-primary-brand transition-colors relative group/footer">
                                 Security
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-48 p-4 bg-slate-900 text-white rounded-2xl shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover/footer:opacity-100 group-hover/footer:translate-y-0 transition-all normal-case tracking-normal text-left">
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-48 p-4 bg-zinc-900 text-white rounded-2xl shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover/footer:opacity-100 group-hover/footer:translate-y-0 transition-all normal-case tracking-normal text-left">
                                     <p className="font-black text-[9px] uppercase tracking-widest mb-2 text-primary-brand">Vault Status</p>
                                     <p className="text-[10px] font-medium leading-relaxed">Infrastructure is protected by Sovereign Guardian (L7 Protection). All nodes synchronized.</p>
                                 </div>
@@ -471,7 +423,7 @@ export default function DashboardLayout({
                         </Link>
                     </div>
                 </footer>
-            </motion.div>
+            </div>
 
             <NotificationPanel isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
         </div>

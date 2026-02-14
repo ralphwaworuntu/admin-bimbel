@@ -16,6 +16,7 @@ import {
     AlertTriangle,
     ChevronRight
 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function AdminSettingsPage() {
     return (
@@ -66,7 +67,10 @@ export default function AdminSettingsPage() {
                         </div>
 
                         <div className="pt-6 border-t border-slate-50 dark:border-white/5">
-                            <button className="bg-purple-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-purple-600/20 hover:scale-105 active:scale-95 transition-all">
+                            <button
+                                onClick={() => toast.success("Sync Committed: All nodes updated.")}
+                                className="bg-purple-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-purple-600/20 hover:scale-105 active:scale-95 transition-all"
+                            >
                                 Commit Sync
                             </button>
                         </div>
@@ -130,14 +134,30 @@ export default function AdminSettingsPage() {
                             Executive operations with potential lattice instability. Handle with precision.
                         </p>
                         <div className="space-y-3">
-                            <button className="w-full py-4 px-6 rounded-2xl bg-white dark:bg-slate-800 border border-red-500/10 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-600 hover:text-white transition-all text-left flex items-center justify-between group">
+                            <button
+                                onClick={() => {
+                                    toast.promise(new Promise(r => setTimeout(r, 2000)), {
+                                        loading: 'Purging Global Edge Cache...',
+                                        success: 'Cache Cleared: 142MB freed',
+                                        error: 'Failed to purge'
+                                    });
+                                }}
+                                className="w-full py-4 px-6 rounded-2xl bg-white dark:bg-slate-800 border border-red-500/10 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-600 hover:text-white transition-all text-left flex items-center justify-between group"
+                            >
                                 <div className="flex items-center gap-3">
                                     <RefreshCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
                                     Purge Global Cache
                                 </div>
                                 <ChevronRight className="w-3 h-3" />
                             </button>
-                            <button className="w-full py-4 px-6 rounded-2xl bg-white dark:bg-slate-800 border border-red-500/10 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-600 hover:text-white transition-all text-left flex items-center justify-between group">
+                            <button
+                                onClick={() => {
+                                    if (confirm("ACTIVATE MAINTENANCE ORBIT?\n\nThis will suspend all user traffic.")) {
+                                        toast.error("Maintenance Orbit Protocol Engaged");
+                                    }
+                                }}
+                                className="w-full py-4 px-6 rounded-2xl bg-white dark:bg-slate-800 border border-red-500/10 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-600 hover:text-white transition-all text-left flex items-center justify-between group"
+                            >
                                 <div className="flex items-center gap-3">
                                     <Lock className="w-4 h-4" />
                                     Maintenance Orbit

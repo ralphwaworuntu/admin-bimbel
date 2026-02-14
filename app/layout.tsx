@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CommandPalette } from "@/components/command-palette";
 import { I18nProvider } from "@/lib/i18n";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -59,6 +60,7 @@ export default function RootLayout({
             <div className="page-transition-wrapper min-h-screen">
               {children}
             </div>
+            <Toaster position="top-center" />
             <script
               dangerouslySetInnerHTML={{
                 __html: `

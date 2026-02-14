@@ -12,6 +12,7 @@ import {
     Users
 } from "lucide-react";
 import { OracleControls } from "@/components/admin/oracle-controls";
+import { NeuralSearch } from "@/components/admin/neural-search";
 
 export default async function AdminOraclePage() {
     const insights = await getOracleInsights(100);
@@ -39,6 +40,12 @@ export default async function AdminOraclePage() {
                     <OracleControls />
                 </div>
             </header>
+
+            {/* Neural Interface */}
+            <div className="relative z-20">
+                <NeuralSearch />
+            </div>
+
 
             {/* Neural Lattice (KPIs) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
